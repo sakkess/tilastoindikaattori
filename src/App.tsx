@@ -267,6 +267,27 @@ const shouldRaiseDifficulty = (row: ParsedRow) => {
 function App() {
   const [columnData, setColumnData] = useState<Record<string, string[]>>(createEmptyColumnData());
   const [uploadMessage, setUploadMessage] = useState<string>('Ei vielä rivejä. Lataa CSV tai lisää tietoja myöhemmin.');
+  const [highlightedCells, setHighlightedCells] = useState<Set<string>>(new Set());
+
+  const toggleHighlight = (heading: string, rowIndex: number, cellContent: string) => {
+    if (!cellContent) {
+      return;
+    }
+
+    const cellKey = `${heading}-${rowIndex}`;
+
+    setHighlightedCells((prev) => {
+      const next = new Set(prev);
+
+      if (next.has(cellKey)) {
+        next.delete(cellKey);
+      } else {
+        next.add(cellKey);
+      }
+
+      return next;
+    });
+  };
 
   const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -304,6 +325,7 @@ function App() {
       };
 
       setColumnData(updatedColumnData);
+      setHighlightedCells(new Set());
 
       const totalMatches =
         tosiHuonoHints.length +
@@ -317,6 +339,7 @@ function App() {
       setUploadMessage(totalMatches === 0 ? 'Ehtoja vastaavia rivejä ei löytynyt.' : 'Lataus onnistui. Ehtoja vastaavat rivit on listattu taulukossa.');
     } catch (error) {
       setColumnData(createEmptyColumnData());
+      setHighlightedCells(new Set());
       setUploadMessage(error instanceof Error ? error.message : 'CSV-tiedoston käsittely epäonnistui.');
     }
   };
@@ -362,9 +385,22 @@ function App() {
                       {columnHeadings.map((heading) => {
                         const cellContent = columnData[heading]?.[rowIndex] ?? '';
                         const ariaLabel = `${heading}${cellContent ? `: ${cellContent}` : ' (ei dataa)'}`;
+                        const cellKey = `${heading}-${rowIndex}`;
+                        const isHighlighted = highlightedCells.has(cellKey);
+                        const cellClasses = [
+                          cellContent ? 'clickable-cell' : '',
+                          isHighlighted ? 'highlighted-cell' : '',
+                        ]
+                          .filter(Boolean)
+                          .join(' ');
 
                         return (
-                          <td key={`${heading}-${rowIndex}`} aria-label={ariaLabel}>
+                          <td
+                            key={cellKey}
+                            aria-label={ariaLabel}
+                            className={cellClasses || undefined}
+                            onClick={() => toggleHighlight(heading, rowIndex, cellContent)}
+                          >
                             {cellContent}
                           </td>
                         );
