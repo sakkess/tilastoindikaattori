@@ -91,6 +91,32 @@ const parseCsv = (text: string) => {
 const hasBaseRequirements = (row: ParsedRow) =>
   Boolean(row.exercise) && row.noOfHint > 0 && row.percentWrong !== 0 && row.total > 19 && row.wrong + row.hint > 9;
 
+const tarvitseeKovastiVihjeita = (row: ParsedRow) => {
+  if (!row.exercise || row.noOfHint !== 0 || row.total <= 19 || row.total === 0) {
+    return false;
+  }
+
+  const ratio = row.wrong / row.total;
+
+  if (row.difficulty === 1) {
+    return ratio > 0.4;
+  }
+
+  if (row.difficulty === 2) {
+    return ratio > 0.566;
+  }
+
+  if (row.difficulty === 3) {
+    return ratio > 0.693;
+  }
+
+  if (row.difficulty === 4) {
+    return ratio > 0.8;
+  }
+
+  return false;
+};
+
 const isTosiHuonoHint = (row: ParsedRow) => {
   if (!hasBaseRequirements(row)) {
     return false;
@@ -159,16 +185,18 @@ function App() {
       const rows = parseCsv(text);
       const tosiHuonoHints = rows.filter(isTosiHuonoHint).map((row) => row.exercise);
       const semiHuonoHints = rows.filter(isSemiHuonoHint).map((row) => row.exercise);
+      const paljonVihjeita = rows.filter(tarvitseeKovastiVihjeita).map((row) => row.exercise);
 
       const updatedColumnData = {
         ...createEmptyColumnData(),
         'Tosi huono vihje': tosiHuonoHints,
         'Semi huono vihje': semiHuonoHints,
+        'Tarvitsee kovasti vihjeitä': paljonVihjeita,
       };
 
       setColumnData(updatedColumnData);
 
-      const totalMatches = tosiHuonoHints.length + semiHuonoHints.length;
+      const totalMatches = tosiHuonoHints.length + semiHuonoHints.length + paljonVihjeita.length;
       setUploadMessage(totalMatches === 0 ? 'Ehtoja vastaavia rivejä ei löytynyt.' : 'Lataus onnistui. Ehtoja vastaavat rivit on listattu taulukossa.');
     } catch (error) {
       setColumnData(createEmptyColumnData());
