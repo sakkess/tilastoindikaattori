@@ -10,6 +10,7 @@ type ParsedRow = {
   total: number;
   wrong: number;
   hint: number;
+  notUnderstood: number;
 };
 
 const columnHeadings = [
@@ -56,6 +57,7 @@ const parseCsv = (text: string) => {
   const totalIndex = headerIndex('total');
   const wrongIndex = headerIndex('wrong');
   const hintIndex = headerIndex('hint');
+  const notUnderstoodIndex = headerIndex('not_understood');
 
   if (
     [
@@ -67,6 +69,7 @@ const parseCsv = (text: string) => {
       totalIndex,
       wrongIndex,
       hintIndex,
+      notUnderstoodIndex,
     ].includes(-1)
   ) {
     throw new Error('CSV-tiedostosta puuttuu vaadittuja sarakkeita.');
@@ -84,6 +87,7 @@ const parseCsv = (text: string) => {
       total: parseNumber(columns[totalIndex] ?? '0'),
       wrong: parseNumber(columns[wrongIndex] ?? '0'),
       hint: parseNumber(columns[hintIndex] ?? '0'),
+      notUnderstood: parseNumber(columns[notUnderstoodIndex] ?? '0'),
     };
   });
 };
@@ -195,6 +199,14 @@ const isSemiHuonoHint = (row: ParsedRow) => {
   return false;
 };
 
+const isTosiHuonoMallivastaus = (row: ParsedRow) => {
+  if (row.wrong === 0 || row.total <= 19) {
+    return false;
+  }
+
+  return row.notUnderstood / row.wrong > 0.5;
+};
+
 function App() {
   const [columnData, setColumnData] = useState<Record<string, string[]>>(createEmptyColumnData());
   const [uploadMessage, setUploadMessage] = useState<string>('Ei vielä rivejä. Lataa CSV tai lisää tietoja myöhemmin.');
@@ -213,6 +225,9 @@ function App() {
       const semiHuonoHints = rows.filter(isSemiHuonoHint).map((row) => row.exercise);
       const semistiVihjeita = rows.filter(tarvitseeSemistiVihjeita).map((row) => row.exercise);
       const paljonVihjeita = rows.filter(tarvitseeKovastiVihjeita).map((row) => row.exercise);
+      const tosiHuonotMallivastaukset = rows
+        .filter(isTosiHuonoMallivastaus)
+        .map((row) => row.exercise);
 
       const updatedColumnData = {
         ...createEmptyColumnData(),
@@ -220,12 +235,17 @@ function App() {
         'Semi huono vihje': semiHuonoHints,
         'Tarvitsee semisti vihjeitä': semistiVihjeita,
         'Tarvitsee kovasti vihjeitä': paljonVihjeita,
+        'Tosi huono mallivastaus': tosiHuonotMallivastaukset,
       };
 
       setColumnData(updatedColumnData);
 
       const totalMatches =
-        tosiHuonoHints.length + semiHuonoHints.length + semistiVihjeita.length + paljonVihjeita.length;
+        tosiHuonoHints.length +
+        semiHuonoHints.length +
+        semistiVihjeita.length +
+        paljonVihjeita.length +
+        tosiHuonotMallivastaukset.length;
       setUploadMessage(totalMatches === 0 ? 'Ehtoja vastaavia rivejä ei löytynyt.' : 'Lataus onnistui. Ehtoja vastaavat rivit on listattu taulukossa.');
     } catch (error) {
       setColumnData(createEmptyColumnData());
