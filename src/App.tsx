@@ -23,6 +23,15 @@ const columnHeadings = [
   'Laske vaikeustasoa yhdellä',
 ];
 
+const createEmptyColumnData = () =>
+  columnHeadings.reduce(
+    (acc, heading) => ({
+      ...acc,
+      [heading]: [],
+    }),
+    {} as Record<string, string[]>,
+  );
+
 const parseNumber = (value: string) => Number(value.replace(',', '.'));
 
 const parseCsv = (text: string) => {
@@ -79,39 +88,63 @@ const parseCsv = (text: string) => {
   });
 };
 
-const isMatchingRow = (row: ParsedRow) => {
-  if (!row.exercise || row.noOfHint <= 0 || row.percentWrong === 0) {
+const hasBaseRequirements = (row: ParsedRow) =>
+  Boolean(row.exercise) && row.noOfHint > 0 && row.percentWrong !== 0 && row.total > 19 && row.wrong + row.hint > 9;
+
+const isTosiHuonoHint = (row: ParsedRow) => {
+  if (!hasBaseRequirements(row)) {
     return false;
   }
 
   const ratio = row.percentHint / row.percentWrong;
-  const hasSufficientTotals = row.total > 19 && row.wrong + row.hint > 9;
-
-  if (!hasSufficientTotals) {
-    return false;
-  }
 
   if (row.difficulty === 1) {
-    return ratio > 0.4 && ratio < 0.8;
+    return ratio < 0.4;
   }
 
   if (row.difficulty === 2) {
-    return ratio > 0.3 && ratio < 0.6;
+    return ratio < 0.3;
   }
 
   if (row.difficulty === 3) {
-    return ratio > 0.2 && ratio < 0.4;
+    return ratio < 0.2;
   }
 
   if (row.difficulty === 4) {
-    return ratio > 0.1 && ratio < 0.2;
+    return ratio < 0.1;
+  }
+
+  return false;
+};
+
+const isSemiHuonoHint = (row: ParsedRow) => {
+  if (!hasBaseRequirements(row)) {
+    return false;
+  }
+
+  const ratio = row.percentHint / row.percentWrong;
+
+  if (row.difficulty === 1) {
+    return ratio >= 0.4 && ratio < 0.8;
+  }
+
+  if (row.difficulty === 2) {
+    return ratio >= 0.3 && ratio < 0.6;
+  }
+
+  if (row.difficulty === 3) {
+    return ratio >= 0.2 && ratio < 0.4;
+  }
+
+  if (row.difficulty === 4) {
+    return ratio >= 0.1 && ratio < 0.2;
   }
 
   return false;
 };
 
 function App() {
-  const [matchingExercises, setMatchingExercises] = useState<string[]>([]);
+  const [columnData, setColumnData] = useState<Record<string, string[]>>(createEmptyColumnData());
   const [uploadMessage, setUploadMessage] = useState<string>('Ei vielä rivejä. Lataa CSV tai lisää tietoja myöhemmin.');
 
   const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -124,15 +157,26 @@ function App() {
     try {
       const text = await file.text();
       const rows = parseCsv(text);
-      const matches = rows.filter(isMatchingRow).map((row) => row.exercise);
+      const tosiHuonoHints = rows.filter(isTosiHuonoHint).map((row) => row.exercise);
+      const semiHuonoHints = rows.filter(isSemiHuonoHint).map((row) => row.exercise);
 
-      setMatchingExercises(matches);
-      setUploadMessage(matches.length === 0 ? 'Ehtoja vastaavia rivejä ei löytynyt.' : 'Lataus onnistui. Ehtoja vastaavat rivit on listattu taulukossa.');
+      const updatedColumnData = {
+        ...createEmptyColumnData(),
+        'Tosi huono vihje': tosiHuonoHints,
+        'Semi huono vihje': semiHuonoHints,
+      };
+
+      setColumnData(updatedColumnData);
+
+      const totalMatches = tosiHuonoHints.length + semiHuonoHints.length;
+      setUploadMessage(totalMatches === 0 ? 'Ehtoja vastaavia rivejä ei löytynyt.' : 'Lataus onnistui. Ehtoja vastaavat rivit on listattu taulukossa.');
     } catch (error) {
-      setMatchingExercises([]);
+      setColumnData(createEmptyColumnData());
       setUploadMessage(error instanceof Error ? error.message : 'CSV-tiedoston käsittely epäonnistui.');
     }
   };
+
+  const maxRows = Math.max(0, ...Object.values(columnData).map((column) => column.length));
 
   return (
     <main className="app">
@@ -166,28 +210,29 @@ function App() {
               </tr>
             </thead>
             <tbody>
-              {matchingExercises.length === 0 ? (
+              {maxRows === 0 ? (
                 <tr>
                   <td colSpan={columnHeadings.length} className="empty-state">
                     {uploadMessage}
                   </td>
                 </tr>
               ) : (
-                matchingExercises.map((exercise) => (
-                  <tr key={exercise}>
-                    {columnHeadings.map((heading) => {
-                      const isHintCategory = heading === 'Semi huono vihje' || heading === 'Tosi huono vihje';
-                      const cellContent = isHintCategory ? exercise : '';
-                      const ariaLabel = `${heading}${cellContent ? `: ${cellContent}` : ' (ei dataa)'}`;
+                Array.from({ length: maxRows }).map(
+                  (_, rowIndex) => (
+                    <tr key={rowIndex}>
+                      {columnHeadings.map((heading) => {
+                        const cellContent = columnData[heading]?.[rowIndex] ?? '';
+                        const ariaLabel = `${heading}${cellContent ? `: ${cellContent}` : ' (ei dataa)'}`;
 
-                      return (
-                        <td key={`${exercise}-${heading}`} aria-label={ariaLabel}>
-                          {cellContent}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))
+                        return (
+                          <td key={`${heading}-${rowIndex}`} aria-label={ariaLabel}>
+                            {cellContent}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ),
+                )
               )}
             </tbody>
           </table>
