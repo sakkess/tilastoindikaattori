@@ -266,8 +266,10 @@ const shouldRaiseDifficulty = (row: ParsedRow) => {
 
 function App() {
   const [columnData, setColumnData] = useState<Record<string, string[]>>(createEmptyColumnData());
-  const [uploadMessage, setUploadMessage] = useState<string>('Ei vielä rivejä. Lataa CSV tai lisää tietoja myöhemmin.');
+  const [uploadMessage, setUploadMessage] = useState<string>('');
   const [highlightedCells, setHighlightedCells] = useState<Set<string>>(new Set());
+
+  const emptyTableMessage = 'Ei vielä rivejä. Lataa CSV.';
 
   const toggleHighlight = (heading: string, rowIndex: number, cellContent: string) => {
     if (!cellContent) {
@@ -295,6 +297,8 @@ function App() {
     if (!file) {
       return;
     }
+
+    setUploadMessage('');
 
     try {
       const text = await file.text();
@@ -352,9 +356,11 @@ function App() {
       <form className="upload" aria-label="CSV upload">
         <label htmlFor="csv-upload">Lataa Studiosta kaikkien tehtävien tilasto ja laita se tänne.</label>
         <input id="csv-upload" type="file" accept=".csv" onChange={handleFileChange} />
-        <p className="upload-status" role="status">
-          {uploadMessage}
-        </p>
+        {uploadMessage && (
+          <p className="upload-status" role="status">
+            {uploadMessage}
+          </p>
+        )}
       </form>
 
       <section className="hint-table">
@@ -374,7 +380,7 @@ function App() {
               {maxRows === 0 ? (
                 <tr>
                   <td colSpan={columnHeadings.length} className="empty-state">
-                    {uploadMessage}
+                    {uploadMessage || emptyTableMessage}
                   </td>
                 </tr>
               ) : (
