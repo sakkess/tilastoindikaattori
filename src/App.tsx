@@ -67,19 +67,19 @@ const isMatchingRow = (row: ParsedRow) => {
   const ratio = row.percentHint / row.percentWrong;
 
   if (row.difficulty === 1) {
-    return ratio < 0.4;
+    return ratio > 0.4 && ratio < 0.8;
   }
 
   if (row.difficulty === 2) {
-    return ratio < 0.3;
+    return ratio > 0.3 && ratio < 0.6;
   }
 
   if (row.difficulty === 3) {
-    return ratio < 0.2;
+    return ratio > 0.2 && ratio < 0.4;
   }
 
   if (row.difficulty === 4) {
-    return ratio < 0.1;
+    return ratio > 0.1 && ratio < 0.2;
   }
 
   return false;
@@ -150,10 +150,17 @@ function App() {
               ) : (
                 matchingExercises.map((exercise) => (
                   <tr key={exercise}>
-                    <td>{exercise}</td>
-                    {columnHeadings.slice(1).map((heading) => (
-                      <td key={`${exercise}-${heading}`} aria-label={`${heading} (ei dataa)`}></td>
-                    ))}
+                    {columnHeadings.map((heading) => {
+                      const isSemiHuonoVihje = heading === 'Semi huono vihje';
+                      const cellContent = isSemiHuonoVihje ? exercise : '';
+                      const ariaLabel = `${heading}${cellContent ? `: ${cellContent}` : ' (ei dataa)'}`;
+
+                      return (
+                        <td key={`${exercise}-${heading}`} aria-label={ariaLabel}>
+                          {cellContent}
+                        </td>
+                      );
+                    })}
                   </tr>
                 ))
               )}
