@@ -57,6 +57,13 @@ h1 {
   color: #475569;
 }
 
+.table-note {
+  margin: 0;
+  color: #475569;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
 .table-wrapper {
   overflow-x: auto;
   border: 1px solid #e5e7eb;

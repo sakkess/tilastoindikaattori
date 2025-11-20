@@ -364,6 +364,10 @@ function App() {
       </form>
 
       <section className="hint-table">
+        <p className="table-note">
+          Huomaa! Tilastot eivät sisällä tietoa siitä, milloin tehtäviä on muokattu. Joihinkin tehtäviin on saatettu tehdä
+          parannuksia tai korjauksia tilaston alkamisajan jälkeen. Tarkista tehtävän tiedot ennen muutosten tekemistä.
+        </p>
 
         <div className="table-wrapper" role="region" aria-live="polite">
           <table>
