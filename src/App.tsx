@@ -180,7 +180,7 @@ function App() {
 
   return (
     <main className="app">
-      <h1>Tilastoindikaattorit</h1>
+      <h1>Saken tilastoindikaattorit</h1>
       <form className="upload" aria-label="CSV upload">
         <label htmlFor="csv-upload">Lataa CSV-tiedosto</label>
         <input id="csv-upload" type="file" accept=".csv" onChange={handleFileChange} />
@@ -189,14 +189,7 @@ function App() {
         </p>
       </form>
 
-      <section className="hint-table" aria-labelledby="hint-table-heading">
-        <div className="section-header">
-          <h2 id="hint-table-heading">Vihje- ja mallivastaustaulukko</h2>
-          <p>
-            Tässä taulukossa voit tarkastella eri vihje- ja vaikeustasoluokkia. Lisää
-            dataa lataamalla CSV-tiedoston tai syöttämällä rivejä myöhemmin.
-          </p>
-        </div>
+      <section className="hint-table">
 
         <div className="table-wrapper" role="region" aria-live="polite">
           <table>
