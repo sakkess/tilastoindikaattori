@@ -7,6 +7,9 @@ type ParsedRow = {
   noOfHint: number;
   percentHint: number;
   percentWrong: number;
+  total: number;
+  wrong: number;
+  hint: number;
 };
 
 const columnHeadings = [
@@ -41,8 +44,22 @@ const parseCsv = (text: string) => {
   const noOfHintIndex = headerIndex('no_of_hint');
   const percentHintIndex = headerIndex('percent_hint');
   const percentWrongIndex = headerIndex('percent_wrong');
+  const totalIndex = headerIndex('total');
+  const wrongIndex = headerIndex('wrong');
+  const hintIndex = headerIndex('hint');
 
-  if ([exerciseIndex, difficultyIndex, noOfHintIndex, percentHintIndex, percentWrongIndex].includes(-1)) {
+  if (
+    [
+      exerciseIndex,
+      difficultyIndex,
+      noOfHintIndex,
+      percentHintIndex,
+      percentWrongIndex,
+      totalIndex,
+      wrongIndex,
+      hintIndex,
+    ].includes(-1)
+  ) {
     throw new Error('CSV-tiedostosta puuttuu vaadittuja sarakkeita.');
   }
 
@@ -55,6 +72,9 @@ const parseCsv = (text: string) => {
       noOfHint: parseNumber(columns[noOfHintIndex] ?? '0'),
       percentHint: parseNumber(columns[percentHintIndex] ?? '0'),
       percentWrong: parseNumber(columns[percentWrongIndex] ?? '0'),
+      total: parseNumber(columns[totalIndex] ?? '0'),
+      wrong: parseNumber(columns[wrongIndex] ?? '0'),
+      hint: parseNumber(columns[hintIndex] ?? '0'),
     };
   });
 };
@@ -65,6 +85,11 @@ const isMatchingRow = (row: ParsedRow) => {
   }
 
   const ratio = row.percentHint / row.percentWrong;
+  const hasSufficientTotals = row.total > 19 && row.wrong + row.hint > 9;
+
+  if (!hasSufficientTotals) {
+    return false;
+  }
 
   if (row.difficulty === 1) {
     return ratio > 0.4 && ratio < 0.8;
@@ -151,8 +176,8 @@ function App() {
                 matchingExercises.map((exercise) => (
                   <tr key={exercise}>
                     {columnHeadings.map((heading) => {
-                      const isSemiHuonoVihje = heading === 'Semi huono vihje';
-                      const cellContent = isSemiHuonoVihje ? exercise : '';
+                      const isHintCategory = heading === 'Semi huono vihje' || heading === 'Tosi huono vihje';
+                      const cellContent = isHintCategory ? exercise : '';
                       const ariaLabel = `${heading}${cellContent ? `: ${cellContent}` : ' (ei dataa)'}`;
 
                       return (
