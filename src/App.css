@@ -37,6 +37,66 @@ h1 {
   font-size: clamp(1.9rem, 3vw, 2.4rem);
 }
 
+.hint-table {
+  display: grid;
+  gap: 1rem;
+}
+
+.section-header {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.section-header h2 {
+  margin: 0;
+  font-size: clamp(1.2rem, 2vw, 1.4rem);
+}
+
+.section-header p {
+  margin: 0;
+  color: #475569;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.table-wrapper table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.table-wrapper th,
+.table-wrapper td {
+  padding: 0.75rem 0.85rem;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.table-wrapper thead {
+  background: #f8fafc;
+}
+
+.table-wrapper th {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.table-wrapper tbody tr:last-of-type td {
+  border-bottom: none;
+}
+
+.empty-state {
+  text-align: center;
+  color: #64748b;
+  font-style: italic;
+}
+
 .upload {
   display: grid;
   gap: 0.5rem;
