@@ -9,6 +9,7 @@ type ParsedRow = {
   percentWrong: number;
   total: number;
   wrong: number;
+  right: number;
   hint: number;
   notUnderstood: number;
 };
@@ -56,6 +57,7 @@ const parseCsv = (text: string) => {
   const percentWrongIndex = headerIndex('percent_wrong');
   const totalIndex = headerIndex('total');
   const wrongIndex = headerIndex('wrong');
+  const rightIndex = headerIndex('right');
   const hintIndex = headerIndex('hint');
   const notUnderstoodIndex = headerIndex('not_understood');
 
@@ -68,6 +70,7 @@ const parseCsv = (text: string) => {
       percentWrongIndex,
       totalIndex,
       wrongIndex,
+      rightIndex,
       hintIndex,
       notUnderstoodIndex,
     ].includes(-1)
@@ -86,6 +89,7 @@ const parseCsv = (text: string) => {
       percentWrong: parseNumber(columns[percentWrongIndex] ?? '0'),
       total: parseNumber(columns[totalIndex] ?? '0'),
       wrong: parseNumber(columns[wrongIndex] ?? '0'),
+      right: parseNumber(columns[rightIndex] ?? '0'),
       hint: parseNumber(columns[hintIndex] ?? '0'),
       notUnderstood: parseNumber(columns[notUnderstoodIndex] ?? '0'),
     };
@@ -215,6 +219,29 @@ const isSemiHuonoMallivastaus = (row: ParsedRow) => {
   return row.notUnderstood / row.wrong > 0.35;
 };
 
+const shouldRaiseDifficulty = (row: ParsedRow) => {
+  if (row.total <= 19) {
+    return false;
+  }
+
+  const wrongRatio = row.wrong / row.total;
+  const rightRatio = row.right / row.total;
+
+  if (row.difficulty === 1) {
+    return wrongRatio > 0.3 && rightRatio < 0.5;
+  }
+
+  if (row.difficulty === 2) {
+    return wrongRatio > 0.6 && rightRatio < 0.3;
+  }
+
+  if (row.difficulty === 3) {
+    return wrongRatio > 0.9 && rightRatio < 0.1;
+  }
+
+  return false;
+};
+
 function App() {
   const [columnData, setColumnData] = useState<Record<string, string[]>>(createEmptyColumnData());
   const [uploadMessage, setUploadMessage] = useState<string>('Ei vielä rivejä. Lataa CSV tai lisää tietoja myöhemmin.');
@@ -233,6 +260,7 @@ function App() {
       const semiHuonoHints = rows.filter(isSemiHuonoHint).map((row) => row.exercise);
       const semistiVihjeita = rows.filter(tarvitseeSemistiVihjeita).map((row) => row.exercise);
       const paljonVihjeita = rows.filter(tarvitseeKovastiVihjeita).map((row) => row.exercise);
+      const nostaaVaikeustasoa = rows.filter(shouldRaiseDifficulty).map((row) => row.exercise);
       const tosiHuonotMallivastaukset = rows
         .filter(isTosiHuonoMallivastaus)
         .map((row) => row.exercise);
@@ -246,6 +274,7 @@ function App() {
         'Semi huono vihje': semiHuonoHints,
         'Tarvitsee semisti vihjeitä': semistiVihjeita,
         'Tarvitsee kovasti vihjeitä': paljonVihjeita,
+        'Nosta vaikeustasoa yhdellä': nostaaVaikeustasoa,
         'Tosi huono mallivastaus': tosiHuonotMallivastaukset,
         'Semi huono mallivastaus': semiHuonotMallivastaukset,
       };
@@ -257,6 +286,7 @@ function App() {
         semiHuonoHints.length +
         semistiVihjeita.length +
         paljonVihjeita.length +
+        nostaaVaikeustasoa.length +
         tosiHuonotMallivastaukset.length +
         semiHuonotMallivastaukset.length;
       setUploadMessage(totalMatches === 0 ? 'Ehtoja vastaavia rivejä ei löytynyt.' : 'Lataus onnistui. Ehtoja vastaavat rivit on listattu taulukossa.');
