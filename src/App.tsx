@@ -207,6 +207,14 @@ const isTosiHuonoMallivastaus = (row: ParsedRow) => {
   return row.notUnderstood / row.wrong > 0.5;
 };
 
+const isSemiHuonoMallivastaus = (row: ParsedRow) => {
+  if (row.wrong <= 0 || row.total <= 19) {
+    return false;
+  }
+
+  return row.notUnderstood / row.wrong > 0.35;
+};
+
 function App() {
   const [columnData, setColumnData] = useState<Record<string, string[]>>(createEmptyColumnData());
   const [uploadMessage, setUploadMessage] = useState<string>('Ei vielä rivejä. Lataa CSV tai lisää tietoja myöhemmin.');
@@ -228,6 +236,9 @@ function App() {
       const tosiHuonotMallivastaukset = rows
         .filter(isTosiHuonoMallivastaus)
         .map((row) => row.exercise);
+      const semiHuonotMallivastaukset = rows
+        .filter(isSemiHuonoMallivastaus)
+        .map((row) => row.exercise);
 
       const updatedColumnData = {
         ...createEmptyColumnData(),
@@ -236,6 +247,7 @@ function App() {
         'Tarvitsee semisti vihjeitä': semistiVihjeita,
         'Tarvitsee kovasti vihjeitä': paljonVihjeita,
         'Tosi huono mallivastaus': tosiHuonotMallivastaukset,
+        'Semi huono mallivastaus': semiHuonotMallivastaukset,
       };
 
       setColumnData(updatedColumnData);
@@ -245,7 +257,8 @@ function App() {
         semiHuonoHints.length +
         semistiVihjeita.length +
         paljonVihjeita.length +
-        tosiHuonotMallivastaukset.length;
+        tosiHuonotMallivastaukset.length +
+        semiHuonotMallivastaukset.length;
       setUploadMessage(totalMatches === 0 ? 'Ehtoja vastaavia rivejä ei löytynyt.' : 'Lataus onnistui. Ehtoja vastaavat rivit on listattu taulukossa.');
     } catch (error) {
       setColumnData(createEmptyColumnData());
