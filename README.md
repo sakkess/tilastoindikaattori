@@ -1,5 +1,7 @@
 # Tilastoindikaattori
 
+Lataa Studiosta kaikkien tehtävien tilasto ja laita se tänne.
+
 React + TypeScript single-page application scaffolded with Vite.
 
 ## Getting started
