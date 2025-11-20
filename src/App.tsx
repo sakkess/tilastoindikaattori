@@ -219,6 +219,28 @@ const isSemiHuonoMallivastaus = (row: ParsedRow) => {
   return row.notUnderstood / row.wrong > 0.35;
 };
 
+const shouldLowerDifficulty = (row: ParsedRow) => {
+  if (row.total <= 19) {
+    return false;
+  }
+
+  const rightRatio = row.right / row.total;
+
+  if (row.difficulty === 2) {
+    return rightRatio > 0.9;
+  }
+
+  if (row.difficulty === 3) {
+    return rightRatio > 0.7;
+  }
+
+  if (row.difficulty === 4) {
+    return rightRatio > 0.5;
+  }
+
+  return false;
+};
+
 const shouldRaiseDifficulty = (row: ParsedRow) => {
   if (row.total <= 19) {
     return false;
@@ -261,6 +283,7 @@ function App() {
       const semistiVihjeita = rows.filter(tarvitseeSemistiVihjeita).map((row) => row.exercise);
       const paljonVihjeita = rows.filter(tarvitseeKovastiVihjeita).map((row) => row.exercise);
       const nostaaVaikeustasoa = rows.filter(shouldRaiseDifficulty).map((row) => row.exercise);
+      const laskeeVaikeustasoa = rows.filter(shouldLowerDifficulty).map((row) => row.exercise);
       const tosiHuonotMallivastaukset = rows
         .filter(isTosiHuonoMallivastaus)
         .map((row) => row.exercise);
@@ -275,6 +298,7 @@ function App() {
         'Tarvitsee semisti vihjeitä': semistiVihjeita,
         'Tarvitsee kovasti vihjeitä': paljonVihjeita,
         'Nosta vaikeustasoa yhdellä': nostaaVaikeustasoa,
+        'Laske vaikeustasoa yhdellä': laskeeVaikeustasoa,
         'Tosi huono mallivastaus': tosiHuonotMallivastaukset,
         'Semi huono mallivastaus': semiHuonotMallivastaukset,
       };
@@ -287,6 +311,7 @@ function App() {
         semistiVihjeita.length +
         paljonVihjeita.length +
         nostaaVaikeustasoa.length +
+        laskeeVaikeustasoa.length +
         tosiHuonotMallivastaukset.length +
         semiHuonotMallivastaukset.length;
       setUploadMessage(totalMatches === 0 ? 'Ehtoja vastaavia rivejä ei löytynyt.' : 'Lataus onnistui. Ehtoja vastaavat rivit on listattu taulukossa.');
