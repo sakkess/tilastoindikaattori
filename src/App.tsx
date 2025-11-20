@@ -326,6 +326,7 @@ function App() {
   return (
     <main className="app">
       <h1>Saken tilastoindikaattorit</h1>
+      <p>Lataa Studiosta kaikkien tehtävien tilasto ja laita se tänne.</p>
       <form className="upload" aria-label="CSV upload">
         <label htmlFor="csv-upload">Lataa CSV-tiedosto</label>
         <input id="csv-upload" type="file" accept=".csv" onChange={handleFileChange} />
